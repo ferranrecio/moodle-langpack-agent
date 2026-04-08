@@ -16,6 +16,7 @@ Your primary goals are:
 - Downloader script: download.py
 - Langpacks root: lang/
 - Language folder shape: lang/<langcode>/*.php
+- Moodle version support: default is 5.1, configurable via --version flag
 - Typical Moodle lang string format in files:
 
 $string['somekey'] = 'Translated text';
@@ -34,7 +35,11 @@ Run:
 
 python3 download.py ca
 
-Or equivalent forms:
+Or for a specific Moodle version:
+
+python3 download.py ca --version 4.2
+
+Other equivalent forms:
 
 python3 download.py --lang ca
 python3 download.py lang=ca
@@ -45,6 +50,10 @@ python3 download.py lang ca
 Run:
 
 python3 download.py --update
+
+Or for a specific version:
+
+python3 download.py --update --version 4.2
 
 ### Network tuning
 

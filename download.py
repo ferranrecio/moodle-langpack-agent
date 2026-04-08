@@ -16,13 +16,14 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 LANG_ROOT = SCRIPT_DIR / "lang"
-LIST_URL = "https://download.moodle.org/langpack/2.0/"
-DOWNLOAD_URL_PREFIX = "https://download.moodle.org/download.php/direct/langpack/2.0"
 USER_AGENT = "Mozilla/5.0"
+DEFAULT_VERSION = "5.1"
 DEFAULT_TIMEOUT_SECONDS = 30.0
 DEFAULT_RETRIES = 2
 DEFAULT_RETRY_DELAY_SECONDS = 1.5
 DOWNLOAD_CHUNK_SIZE = 64 * 1024
+LANGPACK_LIST_BASE_URL = "https://download.moodle.org/langpack"
+LANGPACK_DOWNLOAD_BASE_URL = "https://download.moodle.org/download.php/direct/langpack"
 
 
 def usage() -> None:
@@ -34,12 +35,13 @@ def usage() -> None:
 	./download.py lang LANGCODE
 	./download.py --list
 	./download.py --update
-	./download.py [LANGCODE] [--timeout SECONDS] [--retries N] [--retry-delay SECONDS]
-	./download.py --update [--timeout SECONDS] [--retries N] [--retry-delay SECONDS]
+	./download.py [LANGCODE] [--version VERSION] [--timeout SECONDS] [--retries N] [--retry-delay SECONDS]
+	./download.py --update [--version VERSION] [--timeout SECONDS] [--retries N] [--retry-delay SECONDS]
 
 Downloads a Moodle language pack into ./lang/LANGCODE.
 
 Options:
+	--version VERSION	Moodle version for langpack URL (default: 5.1)
 	--timeout SECONDS	Network timeout per request (default: 30)
 	--retries N		Number of retries after the first failed request (default: 2)
 	--retry-delay SECONDS	Delay between retries (default: 1.5)
@@ -112,8 +114,9 @@ def request_with_retries(url: str, timeout_seconds: float, retries: int, retry_d
 	raise last_error
 
 
-def fetch_available_langs(timeout_seconds: float, retries: int, retry_delay_seconds: float) -> list[str]:
-	html = request_with_retries(LIST_URL, timeout_seconds, retries, retry_delay_seconds).decode(
+def fetch_available_langs(version: str, timeout_seconds: float, retries: int, retry_delay_seconds: float) -> list[str]:
+	list_url = f"{LANGPACK_LIST_BASE_URL}/{version}/"
+	html = request_with_retries(list_url, timeout_seconds, retries, retry_delay_seconds).decode(
 		"utf-8", errors="replace"
 	)
 
@@ -145,11 +148,12 @@ def validate_lang(lang_code: str, available_langs: list[str]) -> None:
 def download_archive(
 	lang_code: str,
 	archive_path: Path,
+	version: str,
 	timeout_seconds: float,
 	retries: int,
 	retry_delay_seconds: float,
 ) -> None:
-	download_url = f"{DOWNLOAD_URL_PREFIX}/{lang_code}.zip"
+	download_url = f"{LANGPACK_DOWNLOAD_BASE_URL}/{version}/{lang_code}.zip"
 	last_error: Exception | None = None
 
 	for attempt in range(retries + 1):
@@ -240,10 +244,11 @@ def find_installed_langs() -> list[str]:
 	return sorted([entry.name for entry in LANG_ROOT.iterdir() if entry.is_dir()])
 
 
-def parse_args(argv: list[str]) -> tuple[str, bool, bool, float, int, float]:
+def parse_args(argv: list[str]) -> tuple[str, bool, bool, str, float, int, float]:
 	lang_code = ""
 	list_only = False
 	update_only = False
+	version = DEFAULT_VERSION
 	timeout_seconds = DEFAULT_TIMEOUT_SECONDS
 	retries = DEFAULT_RETRIES
 	retry_delay_seconds = DEFAULT_RETRY_DELAY_SECONDS
@@ -287,6 +292,20 @@ def parse_args(argv: list[str]) -> tuple[str, bool, bool, float, int, float]:
 
 		if arg == "--update":
 			update_only = True
+			i += 1
+			continue
+
+		if arg == "--version":
+			if i + 1 >= len(argv):
+				print("Error: --version requires a value.", file=sys.stderr)
+				usage()
+				raise SystemExit(1)
+			version = argv[i + 1]
+			i += 2
+			continue
+
+		if arg.startswith("--version="):
+			version = arg.split("=", 1)[1]
 			i += 1
 			continue
 
@@ -354,14 +373,14 @@ def parse_args(argv: list[str]) -> tuple[str, bool, bool, float, int, float]:
 		usage()
 		raise SystemExit(1)
 
-	return lang_code, list_only, update_only, timeout_seconds, retries, retry_delay_seconds
+	return lang_code, list_only, update_only, version, timeout_seconds, retries, retry_delay_seconds
 
 
 def main(argv: list[str]) -> int:
-	lang_code, list_only, update_only, timeout_seconds, retries, retry_delay_seconds = parse_args(argv)
+	lang_code, list_only, update_only, version, timeout_seconds, retries, retry_delay_seconds = parse_args(argv)
 
 	try:
-		available_langs = fetch_available_langs(timeout_seconds, retries, retry_delay_seconds)
+		available_langs = fetch_available_langs(version, timeout_seconds, retries, retry_delay_seconds)
 	except (urllib.error.URLError, socket.timeout, TimeoutError) as exc:
 		print("Error: could not fetch the list of available Moodle language packs.", file=sys.stderr)
 		print(f"Reason: {exc}", file=sys.stderr)
@@ -404,7 +423,7 @@ def main(argv: list[str]) -> int:
 
 				print(f"Refreshing Moodle langpack '{code}'...")
 				try:
-					download_archive(code, archive_path, timeout_seconds, retries, retry_delay_seconds)
+					download_archive(code, archive_path, version, timeout_seconds, retries, retry_delay_seconds)
 					extract_langpack(code, archive_path, extract_dir)
 				except SystemExit:
 					failed.append(code)
@@ -434,8 +453,8 @@ def main(argv: list[str]) -> int:
 		extract_dir = tmp_dir / "extracted"
 		extract_dir.mkdir(parents=True, exist_ok=True)
 
-		print(f"Downloading Moodle langpack '{lang_code}'...")
-		download_archive(lang_code, archive_path, timeout_seconds, retries, retry_delay_seconds)
+		print(f"Downloading Moodle langpack '{lang_code}' (version {version})...")
+		download_archive(lang_code, archive_path, version, timeout_seconds, retries, retry_delay_seconds)
 
 		print(f"Extracting into {LANG_ROOT / lang_code}...")
 		extract_langpack(lang_code, archive_path, extract_dir)

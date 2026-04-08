@@ -80,6 +80,7 @@ If no language code is provided, the script lists available codes and prompts in
 
 ## Options
 
+- `--version VERSION`: Moodle version for langpack URL. Default: `5.1`.
 - `--list`: Print all currently available language codes.
 - `--update`: Refresh every already-installed language under `./lang/`.
 - `--timeout SECONDS`: Per-request timeout. Default: `30`.
@@ -95,10 +96,16 @@ List available packs:
 ./download.py --list
 ```
 
-Download Catalan:
+Download Catalan (default version 5.1):
 
 ```bash
 ./download.py ca
+```
+
+Download Catalan for Moodle 4.2:
+
+```bash
+./download.py ca --version 4.2
 ```
 
 Download with custom network settings:
@@ -107,10 +114,10 @@ Download with custom network settings:
 ./download.py ca --timeout 20 --retries 4 --retry-delay 2
 ```
 
-Refresh all installed packs:
+Refresh all installed packs with alternative version:
 
 ```bash
-./download.py --update
+./download.py --update --version 5.1
 ```
 
 ## Output Layout
