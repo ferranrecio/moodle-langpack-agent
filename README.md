@@ -7,6 +7,7 @@ Small Python utility to download and refresh Moodle 2.0 language packs into the 
 - Lists available Moodle 2.0 language pack codes.
 - Downloads a specific language pack as a zip archive.
 - Extracts files into `./lang/LANGCODE`.
+- Creates `./lang/info.LANGCODE.json` metadata after each successful download/update.
 - Refreshes already installed language packs with `--update`.
 - Retries failed network requests with configurable timeout and delay.
 
@@ -123,7 +124,33 @@ Refresh all installed packs with alternative version:
 ## Output Layout
 
 - Download target: `./lang/LANGCODE`
+- Metadata file: `./lang/info.LANGCODE.json`
 - Existing destination folder is replaced when re-downloading/updating that language.
+
+### Metadata File Format
+
+After a successful download (or `--update` refresh), the script writes a metadata file per language:
+
+- Path pattern: `./lang/info.LANGCODE.json`
+- Example for Catalan: `./lang/info.ca.json`
+
+Fields:
+
+- `lang`: language code that was downloaded.
+- `moodle_version`: Moodle version used for the download URL.
+- `downloaded_at`: local human-readable timestamp.
+- `downloaded_at_iso`: ISO-8601 timestamp with timezone.
+
+Example:
+
+```json
+{
+	"lang": "ca",
+	"moodle_version": "5.1",
+	"downloaded_at": "April 08, 2026 16:22:11 CEST",
+	"downloaded_at_iso": "2026-04-08T16:22:11.123456+02:00"
+}
+```
 
 ## Notes
 

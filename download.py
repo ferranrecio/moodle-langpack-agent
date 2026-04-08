@@ -8,9 +8,11 @@ import socket
 import sys
 import tempfile
 import time
+import json
 import urllib.error
 import urllib.request
 import zipfile
+from datetime import datetime
 from pathlib import Path
 
 
@@ -237,6 +239,21 @@ def extract_langpack(lang_code: str, archive_path: Path, temp_extract_dir: Path)
 		shutil.move(str(entry), target_dir / entry.name)
 
 
+def write_langpack_info(lang_code: str, version: str) -> None:
+	info_path = LANG_ROOT / f"info.{lang_code}.json"
+	timestamp = datetime.now().astimezone()
+	info = {
+		"lang": lang_code,
+		"moodle_version": version,
+		"downloaded_at": timestamp.strftime("%B %d, %Y %H:%M:%S %Z"),
+		"downloaded_at_iso": timestamp.isoformat(),
+	}
+
+	with info_path.open("w", encoding="utf-8") as info_file:
+		json.dump(info, info_file, indent=2, ensure_ascii=True)
+		info_file.write("\n")
+
+
 def find_installed_langs() -> list[str]:
 	if not LANG_ROOT.exists():
 		return []
@@ -425,6 +442,7 @@ def main(argv: list[str]) -> int:
 				try:
 					download_archive(code, archive_path, version, timeout_seconds, retries, retry_delay_seconds)
 					extract_langpack(code, archive_path, extract_dir)
+					write_langpack_info(code, version)
 				except SystemExit:
 					failed.append(code)
 					print(f"Failed: {code}", file=sys.stderr)
@@ -458,6 +476,7 @@ def main(argv: list[str]) -> int:
 
 		print(f"Extracting into {LANG_ROOT / lang_code}...")
 		extract_langpack(lang_code, archive_path, extract_dir)
+		write_langpack_info(lang_code, version)
 
 	print(f"Done: {LANG_ROOT / lang_code}")
 	return 0
