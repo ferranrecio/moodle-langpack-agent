@@ -35,6 +35,34 @@ python3 download.py --list
 python3 download.py ca
 ```
 
+## Run on macOS
+
+Open Terminal and go to the project folder:
+
+```bash
+cd /path/to/moodle-langpack-agent
+```
+
+Check Python 3 is available:
+
+```bash
+python3 --version
+```
+
+Run the script (recommended):
+
+```bash
+python3 download.py --list
+python3 download.py ca
+```
+
+Optional: make it directly executable and run it with `./`:
+
+```bash
+chmod +x download.py
+./download.py --list
+```
+
 ## Usage
 
 ```text
