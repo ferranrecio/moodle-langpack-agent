@@ -125,6 +125,25 @@ Refresh all installed packs with alternative version:
 - Download target: `./lang/LANGCODE`
 - Existing destination folder is replaced when re-downloading/updating that language.
 
+## Packing Language Files to Markdown
+
+Once you have downloaded language packs, you can create merged markdown files for easy reference:
+
+```bash
+python3 pack.py
+```
+
+This creates `langpack.<langcode>.md` files for each installed language. Each file:
+
+- Starts with a level 1 title: `# Moodle LANGCODE langpack`
+- Contains all PHP files from that language directory
+- Lists each file with a level 2 heading before its content
+- Wraps PHP code in markdown code blocks
+
+Output directory: `./pack/` (created automatically if it does not exist)
+
+Example output: `pack/langpack.en.md`, `pack/langpack.ca.md`, `pack/langpack.es.md`
+
 ## Notes
 
 - The script works with Moodle 2.0 langpack endpoints.
