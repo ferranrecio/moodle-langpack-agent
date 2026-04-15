@@ -152,6 +152,20 @@ Example:
 }
 ```
 
+## Finding Repeated String Literals
+
+Use `repeteated.py` to identify duplicate translations and inconsistent terminology across your langpacks:
+
+```bash
+python3 repeteated.py
+```
+
+This script analyzes all PHP language files within each language folder and finds string values that appear in multiple keys. Results are organized by language and sorted by frequency, helping you:
+
+- Identify translation reuse opportunities
+- Detect terminology inconsistencies
+- Find keys that should share the same translation
+
 ## Notes
 
 - The script works with Moodle 2.0 langpack endpoints.
